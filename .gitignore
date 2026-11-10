@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Large Geospatial & Raster Data
+*.tif
+*.tiff
+*.geotiff
+*.hdf
+*.h5
+*.nc
+*.nc4
+*.zip
+*.tar.gz
+data/raw/
+data/raster/
+
+# Environments & OS files
+.env
+.venv
+env/
+venv/
+.DS_Store
+Thumbs.db
+
+# Jupyter Checkpoints
+.ipynb_checkpoints/
