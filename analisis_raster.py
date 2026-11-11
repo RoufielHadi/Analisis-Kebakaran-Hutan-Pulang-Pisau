@@ -49,11 +49,11 @@ def load_dataset(dataset_dir):
         "deforest": "Kronologi_Deforestasi_Hansen_Pulang_Pisau.tif",
     }
     rasters = {}
-    print(f"[*] Membaca raster dari direktori: {dataset_dir}")
+    print(f"[INFO] Membaca raster dari direktori: {dataset_dir}")
     for key, fname in files.items():
         path = os.path.join(dataset_dir, fname)
         if not os.path.exists(path):
-            raise FileNotFoundError(f"[!] File GeoTIFF tidak ditemukan: {path}")
+            raise FileNotFoundError(f"[ERROR] File GeoTIFF tidak ditemukan: {path}")
         img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
         rasters[key] = img
         print(f"    -> {fname} [Shape: {img.shape}, Dtype: {img.dtype}]")
@@ -142,7 +142,7 @@ def generate_plots(rasters, metrics, df_freq, df_agr, output_dir):
     agreement = rasters["agreement"]
     deforest = rasters["deforest"]
 
-    print("[*] Membuat visualisasi grafik publikasi...")
+    print("[INFO] Membuat visualisasi grafik publikasi...")
 
     # 1. Peta Komparasi 4-Panel
     fig, axes = plt.subplots(2, 2, figsize=(16, 18), dpi=150)
@@ -189,7 +189,7 @@ def generate_plots(rasters, metrics, df_freq, df_agr, output_dir):
     peta_path = os.path.join(output_dir, "peta_komparasi_4panel.png")
     fig.savefig(peta_path, bbox_inches="tight")
     plt.close(fig)
-    print(f"    [+] Peta 4-panel tersimpan: {peta_path}")
+    print(f"    [INFO] Peta 4-panel tersimpan: {peta_path}")
 
     # 2. Grafik Batang Distribusi Frekuensi
     fig, ax = plt.subplots(figsize=(10, 5), dpi=150)
@@ -208,7 +208,7 @@ def generate_plots(rasters, metrics, df_freq, df_agr, output_dir):
     bar_path = os.path.join(output_dir, "distribusi_frekuensi_terbakar.png")
     fig.savefig(bar_path, bbox_inches="tight")
     plt.close(fig)
-    print(f"    [+] Grafik distribusi tersimpan: {bar_path}")
+    print(f"    [INFO] Grafik distribusi tersimpan: {bar_path}")
 
     # 3. Grafik Deforestasi Tahunan
     years = np.arange(2001, 2024)
@@ -231,7 +231,7 @@ def generate_plots(rasters, metrics, df_freq, df_agr, output_dir):
     defor_path = os.path.join(output_dir, "tren_deforestasi_tahunan.png")
     fig.savefig(defor_path, bbox_inches="tight")
     plt.close(fig)
-    print(f"    [+] Grafik deforestasi tersimpan: {defor_path}")
+    print(f"    [INFO] Grafik deforestasi tersimpan: {defor_path}")
 
 
 def main():
@@ -269,11 +269,11 @@ def main():
     # Simpan hasil CSV
     csv_path = os.path.join(output_dir, "ringkasan_metrik_pcd.csv")
     df_freq.to_csv(csv_path, index=False)
-    print(f"\n[*] Ringkasan metrik disimpan ke: {csv_path}")
+    print(f"\n[INFO] Ringkasan metrik disimpan ke: {csv_path}")
 
     # Generate Figures
     generate_plots(rasters, metrics, df_freq, df_agr, output_dir)
-    print("\n[✔] Eksekusi pipeline PCD selesai dengan sukses!")
+    print("\n[SUCCESS] Eksekusi pipeline PCD selesai.")
 
 
 if __name__ == "__main__":
