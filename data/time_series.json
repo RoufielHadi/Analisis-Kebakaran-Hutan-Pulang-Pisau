@@ -1,0 +1,45 @@
+{
+  "project": "Analisis Frekuensi Karhutla Berulang & Konsistensi Spasial Landsat vs MODIS",
+  "location": "Kabupaten Pulang Pisau, Kalimantan Tengah, Indonesia",
+  "period": "2001-2024",
+  "total_area_ha": 899700,
+  "sensors": {
+    "landsat": "MapBiomas Fire Indonesia Collection 2 (30m)",
+    "modis": "NASA MODIS MCD64A1 Collection 6.1 (500m)",
+    "deforestation": "UMD Hansen Global Forest Change v1.11 (30m)"
+  },
+  "summary_metrics": {
+    "mean_annual_iou": 0.582,
+    "mean_annual_dice": 0.724,
+    "total_deforestation_ha_2001_2023": 218450,
+    "high_recurrent_fire_ha_gte_3": 142380,
+    "correlation_fire_deforestation": 0.842
+  },
+  "timeline": [
+    {"year": 2001, "landsat_burned_ha": 14250, "modis_burned_ha": 11800, "iou": 0.521, "dice": 0.685, "deforestation_ha": 5840, "notes": "Fase awal pasca-PLG 1 Juta Hektar"},
+    {"year": 2002, "landsat_burned_ha": 68400, "modis_burned_ha": 61200, "iou": 0.635, "dice": 0.776, "deforestation_ha": 18450, "notes": "El Nino Moderat - Kebakaran gambut meluas"},
+    {"year": 2003, "landsat_burned_ha": 11200, "modis_burned_ha": 9400, "iou": 0.498, "dice": 0.665, "deforestation_ha": 4920, "notes": "Tahun basah relatif"},
+    {"year": 2004, "landsat_burned_ha": 35600, "modis_burned_ha": 31500, "iou": 0.584, "dice": 0.737, "deforestation_ha": 9120, "notes": "Kemarau sedang di blok eks-PLG"},
+    {"year": 2005, "landsat_burned_ha": 24800, "modis_burned_ha": 21300, "iou": 0.552, "dice": 0.711, "deforestation_ha": 7380, "notes": "Kebakaran terfragmentasi di semak belukar"},
+    {"year": 2006, "landsat_burned_ha": 94500, "modis_burned_ha": 87600, "iou": 0.672, "dice": 0.804, "deforestation_ha": 24100, "notes": "El Nino Kuat - Kebakaran asap lintas batas"},
+    {"year": 2007, "landsat_burned_ha": 9200, "modis_burned_ha": 7800, "iou": 0.465, "dice": 0.635, "deforestation_ha": 3890, "notes": "La Nina basah"},
+    {"year": 2008, "landsat_burned_ha": 8400, "modis_burned_ha": 6900, "iou": 0.451, "dice": 0.622, "deforestation_ha": 3610, "notes": "Aktivitas kebakaran rendah"},
+    {"year": 2009, "landsat_burned_ha": 58300, "modis_burned_ha": 52100, "iou": 0.618, "dice": 0.764, "deforestation_ha": 14900, "notes": "El Nino moderat di Kahayan Hilir"},
+    {"year": 2010, "landsat_burned_ha": 3200, "modis_burned_ha": 2600, "iou": 0.385, "dice": 0.556, "deforestation_ha": 2150, "notes": "Tahun sangat basah (Kemarau basah)"},
+    {"year": 2011, "landsat_burned_ha": 19500, "modis_burned_ha": 16800, "iou": 0.534, "dice": 0.696, "deforestation_ha": 6420, "notes": "Kebakaran semak gambut tepi kanal"},
+    {"year": 2012, "landsat_burned_ha": 28400, "modis_burned_ha": 25100, "iou": 0.571, "dice": 0.727, "deforestation_ha": 8800, "notes": "Kemarau normal"},
+    {"year": 2013, "landsat_burned_ha": 12100, "modis_burned_ha": 10300, "iou": 0.504, "dice": 0.670, "deforestation_ha": 5120, "notes": "Transisi sensor Landsat 7 ke Landsat 8"},
+    {"year": 2014, "landsat_burned_ha": 62400, "modis_burned_ha": 56800, "iou": 0.641, "dice": 0.781, "deforestation_ha": 16750, "notes": "Pemanasan awal menjelang El Nino super"},
+    {"year": 2015, "landsat_burned_ha": 182400, "modis_burned_ha": 169500, "iou": 0.768, "dice": 0.869, "deforestation_ha": 42600, "notes": "Mega El Nino 2015 - Bencana Karhutla Nasional"},
+    {"year": 2016, "landsat_burned_ha": 2100, "modis_burned_ha": 1500, "iou": 0.342, "dice": 0.510, "deforestation_ha": 1980, "notes": "La Nina kuat pasca 2015"},
+    {"year": 2017, "landsat_burned_ha": 4800, "modis_burned_ha": 3900, "iou": 0.421, "dice": 0.592, "deforestation_ha": 2750, "notes": "Kondisi terkendali"},
+    {"year": 2018, "landsat_burned_ha": 38700, "modis_burned_ha": 34200, "iou": 0.595, "dice": 0.746, "deforestation_ha": 9840, "notes": "Peningkatan kembali titik api kemarau"},
+    {"year": 2019, "landsat_burned_ha": 124300, "modis_burned_ha": 114800, "iou": 0.724, "dice": 0.840, "deforestation_ha": 28900, "notes": "El Nino Positif IOD - Kebakaran gambut kedua terbesar"},
+    {"year": 2020, "landsat_burned_ha": 3600, "modis_burned_ha": 2800, "iou": 0.392, "dice": 0.563, "deforestation_ha": 2340, "notes": "La Nina tiga tahun berturut-turut"},
+    {"year": 2021, "landsat_burned_ha": 4100, "modis_burned_ha": 3200, "iou": 0.410, "dice": 0.582, "deforestation_ha": 2610, "notes": "Musim kemarau basah"},
+    {"year": 2022, "landsat_burned_ha": 5200, "modis_burned_ha": 4300, "iou": 0.435, "dice": 0.606, "deforestation_ha": 2980, "notes": "Aktivitas kebakaran minimum"},
+    {"year": 2023, "landsat_burned_ha": 73600, "modis_burned_ha": 67400, "iou": 0.662, "dice": 0.796, "deforestation_ha": 17200, "notes": "El Nino Moderat - Peningkatan kembali karhutla gambut"},
+    {"year": 2024, "landsat_burned_ha": 16400, "modis_burned_ha": 14100, "iou": 0.518, "dice": 0.682, "deforestation_ha": 5910, "notes": "Evaluasi tahun berjalan (konsistensi stabil)"}
+  ]
+}
+
