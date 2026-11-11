@@ -77,3 +77,4 @@ Perbedaan resolusi antara Landsat (30 m) dan MODIS (500 m) menuntut metode harmo
 | **Komputasi Lokal / Colab** | Python 3.10+, Rasterio, Geopandas, NumPy, Pandas | Pembacaan raster GeoTIFF, kalkulasi matriks konfusi, perhitungan IoU/Dice, regresi linier. |
 | **Visualisasi Data** | Matplotlib, Seaborn | Pembuatan grafik publikasi (histogram, boxplot, regresi korelasi). |
 | **Web Frontend** | Leaflet.js v1.9.4, Chart.js v4.4.0, Vanilla CSS Modern | Dashboard web interaktif, peta multi-layer, kurva temporal, pixel inspector. |
+

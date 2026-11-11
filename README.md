@@ -5,6 +5,8 @@
 **Institusi:** Politeknik Negeri Bandung (POLBAN)  
 **Tahun Akademik:** 2026/2027  
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/RoufielHadi/Analisis-Kebakaran-Hutan-Pulang-Pisau/blob/main/notebooks/analisis_karhutla_pulang_pisau.ipynb)
+
 ---
 
 ## 👥 Tim Pengembang (Kelompok)
@@ -83,7 +85,7 @@ Untuk menghindari bias resolusi (Landsat 30m vs MODIS 500m), analisis perbanding
 
 ---
 
-## 📁 Struktur Repositori Terencana
+## 📁 Struktur Repositori
 
 ```text
 .
@@ -91,18 +93,47 @@ Untuk menghindari bias resolusi (Landsat 30m vs MODIS 500m), analisis perbanding
 ├── ARCHITECTURE.md           # Arsitektur sistem & alur pemrosesan citra digital
 ├── METRICS.md                # Perumusan matematis PCD dan formulasi metrik
 ├── .gitignore                # Filter raster besar (.tif, .hdf, .nc) agar repo tetap bersih
-├── gee/                      # Skrip Google Earth Engine (JavaScript API)
-│   └── landsat_modis_fire_pipeline.js
-├── notebooks/                # Jupyter / Google Colab Notebooks
-│   └── analisis_konsistensi_karhutla_colab.ipynb
-├── web/                      # Dashboard GIS interaktif (Leaflet.js & Chart.js)
-│   ├── index.html
-│   ├── css/styles.css
-│   └── js/app.js
-└── data/                     # Data batas AOI GeoJSON & metrik JSON (non-raster)
-    ├── geojson/
-    └── time_series_fire_consistency.json
+├── analisis_raster.py        # Skrip otomasi analisis raster & generator visualisasi
+├── notebooks/                # Jupyter / Google Colab Notebook
+│   └── analisis_karhutla_pulang_pisau.ipynb
+├── output/                   # Hasil grafik publikasi ilmiah & ringkasan CSV
+│   ├── peta_komparasi_4panel.png
+│   ├── distribusi_frekuensi_terbakar.png
+│   ├── tren_deforestasi_tahunan.png
+│   └── ringkasan_metrik_pcd.csv
+└── Dataset/                  # Direktori data raster GeoTIFF 250m (di-ignore oleh git)
+    ├── Frekuensi_Terbakar_Landsat_2001_2024.tif
+    ├── Frekuensi_Terbakar_MODIS_2001_2024.tif
+    ├── Spatial_Agreement_Landsat_MODIS_Pulang_Pisau.tif
+    └── Kronologi_Deforestasi_Hansen_Pulang_Pisau.tif
 ```
+
+---
+
+## 📊 Ringkasan Hasil Analisis Data Riil (2001–2024)
+
+| Parameter Analisis | Nilai Kuantitatif | Keterangan / Implikasi Ilmiah |
+| :--- | :---: | :--- |
+| **Total Piksel Landsat Terbakar ($F \ge 1$)** | 158.772 piksel ($992.325,0\text{ ha}$) | Deteksi resolusi detail 30m teragregasi 250m |
+| **Total Piksel MODIS Terbakar ($F \ge 1$)** | 135.913 piksel ($849.456,2\text{ ha}$) | Deteksi resolusi 500m ter-resample 250m |
+| **Irisan Kesepakatan (*Mutual Agreement*)** | **58.833 piksel ($367.706,2\text{ ha}$)** | Kedua sensor sepakat terbakar |
+| **Metrik IoU (Jaccard Index)** | **0,2494 (24,94%)** | Tingkat kesesuaian spasial kumulatif 24 tahun |
+| **Dice Similarity Coefficient** | **0,3993 (39,93%)** | Ukuran overlap spasial dua produk satelit |
+| **Total Deforestasi Hansen GFC (2001–2023)** | 226.995 piksel ($1.418.718,8\text{ ha}$) | Kehilangan tutupan kanopi pohon |
+| **Deforestasi di Zona Karhutla Berulang ($F \ge 2$)** | **86.602 piksel ($541.262,5\text{ ha}$)** | **38,15% deforestasi dipicu oleh kebakaran berulang** |
+
+---
+
+## 🚀 Panduan Eksekusi
+
+### 1. Menjalankan Skrip Python Lokal
+```powershell
+python analisis_raster.py
+```
+Hasil visualisasi peta 4-panel dan grafik akan otomatis diperbarui di folder `output/`.
+
+### 2. Menjalankan di Google Colab
+Klik badge **Open in Colab** di atas atau buka file `notebooks/analisis_karhutla_pulang_pisau.ipynb` di Google Colab.
 
 ---
 
@@ -113,3 +144,4 @@ Untuk menghindari bias resolusi (Landsat 30m vs MODIS 500m), analisis perbanding
 3. **MapBiomas Fire Indonesia (2024).** *Approach and Theoretical Basis Methodological Document (ATBD) - Collection 2*.
 4. **Giglio, L., dkk. (2018).** *Collection 6 MODIS Burned Area Product User's Guide (MCD64A1)*. NASA Land Processes Distributed Active Archive Center (LP DAAC).
 5. **Hansen, M. C., dkk. (2013).** *High-Resolution Global Maps of 21st-Century Forest Cover Change*. Science, 342(6160), 850-853.
+

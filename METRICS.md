@@ -70,3 +70,4 @@ Setiap piksel pada grid terpadu dikelompokkan ke dalam salah satu dari 4 kategor
 ## 4. Evaluasi Luas Area (Hektar)
 Untuk grid terpadu metrik dengan proyeksi konsisten (luas sel $A_{\text{cell}} = 250\text{ m} \times 250\text{ m} = 62.500\text{ m}^2$):
 $$\text{Luas (Hektar)} = N_{\text{piksel}} \times \frac{A_{\text{cell}}}{10.000} = N_{\text{piksel}} \times 6.25\text{ ha}$$
+
