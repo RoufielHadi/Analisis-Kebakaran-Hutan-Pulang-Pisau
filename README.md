@@ -5,6 +5,7 @@
 **Institusi:** Politeknik Negeri Bandung (POLBAN)  
 **Tahun Akademik:** 2026/2027  
 
+[![Live Web GIS](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-brightgreen?logo=leaflet&logoColor=white)](https://roufielhadi.github.io/Analisis-Kebakaran-Hutan-Pulang-Pisau/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/RoufielHadi/Analisis-Kebakaran-Hutan-Pulang-Pisau/blob/main/notebooks/analisis_karhutla_pulang_pisau.ipynb)
 
 ---
