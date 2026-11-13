@@ -69,12 +69,12 @@ var landsatAnnualList = years.map(function(yr) {
   var l8 = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2").filterBounds(aoi).filterDate(start, end).map(maskLandsatSR);
   var l9 = ee.ImageCollection("LANDSAT/LC09/C02/T1_L2").filterBounds(aoi).filterDate(start, end).map(maskLandsatSR);
   
-  var comp = ee.Algorithms.If(
+  var rawComp = ee.Algorithms.If(
     yrNum.lt(2013),
     l7.median().select(['SR_B2', 'SR_B4', 'SR_B5', 'SR_B7'], ['green', 'nir', 'swir1', 'swir2']),
     l8.merge(l9).median().select(['SR_B3', 'SR_B5', 'SR_B6', 'SR_B7'], ['green', 'nir', 'swir1', 'swir2'])
   );
-  comp = ee.Image(comp);
+  var comp = ee.Image(rawComp).multiply(0.0000275).add(-0.2);
   
   // Transformasi spektral NBR dan MNDWI
   var nbr = comp.normalizedDifference(['nir', 'swir2']);
@@ -102,7 +102,71 @@ var landsatFrequency = landsatAnnualCol.sum()
   .rename('landsat_frequency')
   .clip(aoi);
 
-// 5. Evaluasi Konsistensi Spasial (Spatial Agreement)
+// 5. Ekstraksi Tahapan Proses Sampel Detil (Tahun 2015: Puncak Karhutla El Nino)
+var sampleYear = 2015;
+var sampleStart = ee.Date.fromYMD(sampleYear, 7, 1);
+var sampleEnd = ee.Date.fromYMD(sampleYear, 11, 30);
+
+var sampleL8 = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2")
+  .filterBounds(aoi)
+  .filterDate(sampleStart, sampleEnd)
+  .map(maskLandsatSR);
+
+var sampleComp = sampleL8.median().select(
+  ['SR_B3', 'SR_B5', 'SR_B6', 'SR_B7'],
+  ['green', 'nir', 'swir1', 'swir2']
+).multiply(0.0000275).add(-0.2).clip(aoi);
+
+var sampleNbr = sampleComp.normalizedDifference(['nir', 'swir2']).rename('nbr');
+var sampleMndwi = sampleComp.normalizedDifference(['green', 'swir1']).rename('mndwi');
+
+var sampleBurnedLandsat = sampleNbr.lt(0.12)
+  .and(sampleComp.select('swir2').gt(0.08))
+  .and(sampleMndwi.lt(0.0))
+  .and(landMask)
+  .toByte()
+  .reproject(targetProjection)
+  .rename('burned_landsat_2015')
+  .clip(aoi);
+
+var sampleFalseColor = sampleComp.select(['swir2', 'nir', 'green'])
+  .visualize({min: 0.0, max: 0.4, gamma: 1.2})
+  .reproject(targetProjection)
+  .clip(aoi);
+
+var sampleModisRaw = modisCol.filterDate(ee.Date.fromYMD(sampleYear, 1, 1), ee.Date.fromYMD(sampleYear, 12, 31))
+  .select('BurnDate').max()
+  .reproject(targetProjection)
+  .clip(aoi);
+
+var sampleBurnedModis = sampleModisRaw.gt(0)
+  .and(landMask)
+  .toByte()
+  .reproject(targetProjection)
+  .rename('burned_modis_2015')
+  .clip(aoi);
+
+// 6. Pembuatan Multi-Band Stack 24 Tahun (2001-2024)
+// Menggabungkan hasil deteksi biner 24 tahun menjadi 1 berkas GeoTIFF multi-band
+var firstYearLandsat = ee.Image(landsatAnnualCol.filter(ee.Filter.eq('year', 2001)).first())
+  .select(['burned_landsat'], ['year_2001']);
+var landsatStack24Year = ee.Image(ee.List.sequence(2002, 2024).iterate(function(yr, acc) {
+  var yrNum = ee.Number(yr);
+  var img = ee.Image(landsatAnnualCol.filter(ee.Filter.eq('year', yrNum)).first());
+  var bName = ee.String('year_').cat(yrNum.format('%d'));
+  return ee.Image(acc).addBands(img.select(['burned_landsat'], [bName]));
+}, firstYearLandsat)).toByte().reproject(targetProjection).clip(aoi);
+
+var firstYearModis = ee.Image(modisAnnualCol.filter(ee.Filter.eq('year', 2001)).first())
+  .select(['burned_modis'], ['year_2001']);
+var modisStack24Year = ee.Image(ee.List.sequence(2002, 2024).iterate(function(yr, acc) {
+  var yrNum = ee.Number(yr);
+  var img = ee.Image(modisAnnualCol.filter(ee.Filter.eq('year', yrNum)).first());
+  var bName = ee.String('year_').cat(yrNum.format('%d'));
+  return ee.Image(acc).addBands(img.select(['burned_modis'], [bName]));
+}, firstYearModis)).toByte().reproject(targetProjection).clip(aoi);
+
+// 7. Evaluasi Konsistensi Spasial (Spatial Agreement)
 var landsatEverBurned = landsatFrequency.gte(1);
 var modisEverBurned = modisFrequency.gte(1);
 
@@ -115,6 +179,8 @@ var agreementMap = ee.Image(0)
   .where(landsatEverBurned.eq(1).and(modisEverBurned.eq(0)), 1)
   .where(landsatEverBurned.eq(0).and(modisEverBurned.eq(1)), 2)
   .where(landsatEverBurned.eq(1).and(modisEverBurned.eq(1)), 3)
+  .toByte()
+  .reproject(targetProjection)
   .clip(aoi)
   .rename('spatial_agreement');
 
@@ -132,11 +198,14 @@ var statsUnion = union.multiply(ee.Image.pixelArea()).reduceRegion({
 print('Luas Kesepakatan (m2):', statsIntersection);
 print('Luas Gabungan (m2):', statsUnion);
 
-// 6. Analisis Deforestasi Hansen GFC
+// 8. Analisis Deforestasi Hansen GFC
 var gfc = ee.Image("UMD/hansen/global_forest_change_2023_v1_11").clip(aoi);
-var lossYear = gfc.select('lossyear').clip(aoi);
+var lossYear = gfc.select('lossyear')
+  .toByte()
+  .reproject(targetProjection)
+  .clip(aoi);
 
-// 7. Visualisasi Peta
+// 9. Visualisasi Lapisan Peta di GEE
 var freqVis = {
   min: 0,
   max: 10,
@@ -149,18 +218,26 @@ var agreementVis = {
   palette: ['#252525', '#fee08b', '#fdae61', '#d73027']
 };
 
-Map.addLayer(landsatFrequency, freqVis, 'Frekuensi Terbakar Landsat (250m)', true);
-Map.addLayer(modisFrequency, freqVis, 'Frekuensi Terbakar MODIS (250m)', false);
-Map.addLayer(agreementMap, agreementVis, 'Peta Kesepakatan Spasial', false);
-Map.addLayer(lossYear.selfMask(), {min: 1, max: 23, palette: ['yellow', 'orange', 'red']}, 'Kronologi Deforestasi Hansen', false);
+Map.addLayer(sampleFalseColor, {}, '1. Landsat 2015 Komposit False Color (SWIR2/NIR/Green)', false);
+Map.addLayer(sampleNbr, {min: -0.2, max: 0.6, palette: ['red', 'orange', 'yellow', 'green']}, '2. Landsat 2015 Indeks NBR', false);
+Map.addLayer(sampleMndwi, {min: -0.5, max: 0.5, palette: ['brown', 'white', 'blue']}, '3. Landsat 2015 Indeks MNDWI', false);
+Map.addLayer(landMask.selfMask(), {palette: ['#38bdf8']}, '4. Masker Daratan Bebas Air (JRC)', false);
+Map.addLayer(sampleBurnedLandsat.selfMask(), {palette: ['#ef4444']}, '5. Landsat 2015 Biner Terbakar', false);
+Map.addLayer(sampleBurnedModis.selfMask(), {palette: ['#f97316']}, '6. MODIS 2015 Biner Terbakar', false);
+Map.addLayer(landsatFrequency, freqVis, '7. Frekuensi Terbakar Landsat (2001-2024)', true);
+Map.addLayer(modisFrequency, freqVis, '8. Frekuensi Terbakar MODIS (2001-2024)', false);
+Map.addLayer(agreementMap, agreementVis, '9. Peta Kesepakatan Spasial (4 Kelas)', false);
+Map.addLayer(lossYear.selfMask(), {min: 1, max: 23, palette: ['yellow', 'orange', 'red']}, '10. Kronologi Deforestasi Hansen (2001-2023)', false);
 
 var outline = ee.Image().byte().paint({featureCollection: pulangPisau, color: 1, width: 2});
-Map.addLayer(outline, {palette: ['#ffffff']}, 'Batas Administrasi');
+Map.addLayer(outline, {palette: ['#ffffff']}, 'Batas Administrasi Pulang Pisau');
 
-// 8. Ekspor Raster ke Google Drive
+// 10. Ekspor Raster Satu per Satu ke Google Drive (Folder: Tubes_PCD_Pulang_Pisau)
+
+// --- A. Tahapan Proses Landsat ---
 Export.image.toDrive({
-  image: agreementMap,
-  description: 'Spatial_Agreement_Landsat_MODIS_Pulang_Pisau',
+  image: sampleFalseColor,
+  description: 'Landsat_2015_Tahap1_Komposit_FalseColor',
   folder: 'Tubes_PCD_Pulang_Pisau',
   scale: 250,
   region: aoi,
@@ -169,7 +246,89 @@ Export.image.toDrive({
 });
 
 Export.image.toDrive({
-  image: landsatFrequency.toByte(),
+  image: sampleNbr.toFloat().reproject(targetProjection),
+  description: 'Landsat_2015_Tahap2_Indeks_NBR',
+  folder: 'Tubes_PCD_Pulang_Pisau',
+  scale: 250,
+  region: aoi,
+  maxPixels: 1e9,
+  crs: 'EPSG:4326'
+});
+
+Export.image.toDrive({
+  image: sampleMndwi.toFloat().reproject(targetProjection),
+  description: 'Landsat_2015_Tahap2_Indeks_MNDWI',
+  folder: 'Tubes_PCD_Pulang_Pisau',
+  scale: 250,
+  region: aoi,
+  maxPixels: 1e9,
+  crs: 'EPSG:4326'
+});
+
+Export.image.toDrive({
+  image: landMask.toByte().reproject(targetProjection),
+  description: 'Lingkungan_Tahap3_Masker_Daratan_JRC',
+  folder: 'Tubes_PCD_Pulang_Pisau',
+  scale: 250,
+  region: aoi,
+  maxPixels: 1e9,
+  crs: 'EPSG:4326'
+});
+
+Export.image.toDrive({
+  image: sampleBurnedLandsat,
+  description: 'Landsat_2015_Tahap4_Biner_Terbakar',
+  folder: 'Tubes_PCD_Pulang_Pisau',
+  scale: 250,
+  region: aoi,
+  maxPixels: 1e9,
+  crs: 'EPSG:4326'
+});
+
+Export.image.toDrive({
+  image: landsatStack24Year,
+  description: 'Landsat_Tahap4_Stack_Biner_2001_2024',
+  folder: 'Tubes_PCD_Pulang_Pisau',
+  scale: 250,
+  region: aoi,
+  maxPixels: 1e9,
+  crs: 'EPSG:4326'
+});
+
+// --- B. Tahapan Proses MODIS ---
+Export.image.toDrive({
+  image: sampleModisRaw.toFloat(),
+  description: 'MODIS_2015_Tahap1_Raw_BurnDate',
+  folder: 'Tubes_PCD_Pulang_Pisau',
+  scale: 250,
+  region: aoi,
+  maxPixels: 1e9,
+  crs: 'EPSG:4326'
+});
+
+Export.image.toDrive({
+  image: sampleBurnedModis,
+  description: 'MODIS_2015_Tahap4_Biner_Terbakar',
+  folder: 'Tubes_PCD_Pulang_Pisau',
+  scale: 250,
+  region: aoi,
+  maxPixels: 1e9,
+  crs: 'EPSG:4326'
+});
+
+Export.image.toDrive({
+  image: modisStack24Year,
+  description: 'MODIS_Tahap4_Stack_Biner_2001_2024',
+  folder: 'Tubes_PCD_Pulang_Pisau',
+  scale: 250,
+  region: aoi,
+  maxPixels: 1e9,
+  crs: 'EPSG:4326'
+});
+
+// --- C. Produk Agregasi Frekuensi & Konsistensi Spasial Akhir ---
+Export.image.toDrive({
+  image: landsatFrequency,
   description: 'Frekuensi_Terbakar_Landsat_2001_2024',
   folder: 'Tubes_PCD_Pulang_Pisau',
   scale: 250,
@@ -179,8 +338,18 @@ Export.image.toDrive({
 });
 
 Export.image.toDrive({
-  image: modisFrequency.toByte(),
+  image: modisFrequency,
   description: 'Frekuensi_Terbakar_MODIS_2001_2024',
+  folder: 'Tubes_PCD_Pulang_Pisau',
+  scale: 250,
+  region: aoi,
+  maxPixels: 1e9,
+  crs: 'EPSG:4326'
+});
+
+Export.image.toDrive({
+  image: agreementMap,
+  description: 'Spatial_Agreement_Landsat_MODIS_Pulang_Pisau',
   folder: 'Tubes_PCD_Pulang_Pisau',
   scale: 250,
   region: aoi,
@@ -197,3 +366,35 @@ Export.image.toDrive({
   maxPixels: 1e9,
   crs: 'EPSG:4326'
 });
+
+// --- D. Opsi Ekspor Biner Terpisah 24 File Tahunan (Opsional) ---
+// Hapus tanda komentar (/* ... */) jika membutuhkan file GeoTIFF terpisah per tahun (2001-2024).
+/*
+for (var y = 2001; y <= 2024; y++) {
+  (function(yr) {
+    var lImg = ee.Image(landsatAnnualCol.filter(ee.Filter.eq('year', yr)).first())
+      .toByte().reproject(targetProjection);
+    Export.image.toDrive({
+      image: lImg,
+      description: 'Landsat_Biner_' + yr,
+      folder: 'Tubes_PCD_Pulang_Pisau/Tahunan_Landsat',
+      scale: 250,
+      region: aoi,
+      maxPixels: 1e9,
+      crs: 'EPSG:4326'
+    });
+
+    var mImg = ee.Image(modisAnnualCol.filter(ee.Filter.eq('year', yr)).first())
+      .toByte().reproject(targetProjection);
+    Export.image.toDrive({
+      image: mImg,
+      description: 'MODIS_Biner_' + yr,
+      folder: 'Tubes_PCD_Pulang_Pisau/Tahunan_MODIS',
+      scale: 250,
+      region: aoi,
+      maxPixels: 1e9,
+      crs: 'EPSG:4326'
+    });
+  })(y);
+}
+*/
